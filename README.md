@@ -84,6 +84,41 @@ Manage your entire dashboard setup from a single, high-fidelity interface.
 
 ---
 
+## 🐳 Docker Deployment
+
+The easiest way to host Homedashy is using Docker.
+
+### Using Docker Compose (Recommended)
+
+1. Create a `docker-compose.yml` (if not already present):
+   ```yaml
+   version: '3.8'
+   services:
+     homedashy:
+       image: ghcr.io/yourusername/homedashy:latest # or build: .
+       container_name: homedashy
+       ports:
+         - "3000:3000"
+       volumes:
+         - ./data:/app/data
+       environment:
+         - DB_PATH=/app/data/sqlite.db
+       restart: always
+   ```
+
+2. Spin up the container:
+   ```bash
+   docker-compose up -d
+   ```
+
+### Building Manually
+```bash
+docker build -t homedashy .
+docker run -p 3000:3000 -v $(pwd)/data:/app/data -e DB_PATH=/app/data/sqlite.db homedashy
+```
+
+---
+
 ## ⚙️ Configuration
 
 - **Adding Apps**: Click its "Add Application" button (plus icon) in the header.
