@@ -79,19 +79,20 @@ export async function POST(req: NextRequest) {
     }
 
     // Use synchronous transaction (better-sqlite3 requirement)
-    const importFn = db.transaction((items: typeof itemsToInsert) => {
-      let count = 0;
-      for (const item of items) {
+    // Items are captured from the outer scope via closure.
+    let importCount = 0;
+    db.transaction((tx) => {
+      for (const item of itemsToInsert) {
         // Ensure category exists (synchronous)
-        const existingCat = db.select().from(categories).where(eq(categories.name, item.categoryName)).get();
+        const existingCat = tx.select().from(categories).where(eq(categories.name, item.categoryName)).get();
         if (!existingCat) {
-          db.insert(categories).values({
+          tx.insert(categories).values({
             name: item.categoryName,
             color: '#8b5cf6',
           }).run();
         }
 
-        db.insert(apps).values({
+        tx.insert(apps).values({
           name: item.name,
           url: item.url,
           description: item.description,
@@ -100,12 +101,9 @@ export async function POST(req: NextRequest) {
           isActive: item.isActive,
         }).run();
 
-        count++;
+        importCount++;
       }
-      return count;
     });
-
-    const importCount = importFn(itemsToInsert);
 
     return NextResponse.json({ success: true, count: importCount }, { status: 201 });
   } catch (error: any) {
