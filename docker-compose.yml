@@ -5,7 +5,7 @@ services:
     build: .
     container_name: homedashy
     ports:
-      - "3000:3000"
+      - "3344:3000"
     volumes:
       - ./data:/app/data
     environment:

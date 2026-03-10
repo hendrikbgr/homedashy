@@ -80,7 +80,7 @@ Manage your entire dashboard setup from a single, high-fidelity interface.
    ```
 
 5. **Access the dashboard**
-   Open [http://localhost:3000](http://localhost:3000) in your browser.
+   Open [http://localhost:3344](http://localhost:3344) in your browser.
 
 ---
 
@@ -98,7 +98,7 @@ The easiest way to host Homedashy is using Docker.
        image: ghcr.io/yourusername/homedashy:latest # or build: .
        container_name: homedashy
        ports:
-         - "3000:3000"
+         - "3344:3000"
        volumes:
          - ./data:/app/data
        environment:
@@ -114,7 +114,7 @@ The easiest way to host Homedashy is using Docker.
 ### Building Manually
 ```bash
 docker build -t homedashy .
-docker run -p 3000:3000 -v $(pwd)/data:/app/data -e DB_PATH=/app/data/sqlite.db homedashy
+docker run -p 3344:3000 -v $(pwd)/data:/app/data -e DB_PATH=/app/data/sqlite.db homedashy
 ```
 
 ---
