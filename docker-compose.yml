@@ -1,0 +1,14 @@
+version: '3.8'
+
+services:
+  homedashy:
+    build: .
+    container_name: homedashy
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./data:/app/data
+    environment:
+      - DB_PATH=/app/data/sqlite.db
+      - NODE_ENV=production
+    restart: always

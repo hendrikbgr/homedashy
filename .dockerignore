@@ -1,0 +1,17 @@
+.next
+node_modules
+.git
+.gitignore
+*.db
+*.db-journal
+*.db-shm
+*.db-wal
+README.md
+.vscode
+.idea
+Dockerfile
+docker-compose.yml
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
