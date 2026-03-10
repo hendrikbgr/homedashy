@@ -101,6 +101,10 @@ export default function UnifiedManagePage() {
     URL.revokeObjectURL(url);
   };
 
+  function handleColorChange(id: number, newColor: string) {
+    updateCategoryColorMutation.mutate({ id, color: newColor });
+  }
+
   return (
     <main className="min-h-screen text-foreground p-8 relative overflow-hidden">
       {/* Decorative Orbs */}
@@ -180,7 +184,7 @@ export default function UnifiedManagePage() {
                     {/* App Icon */}
                     <div className="w-14 h-14 bg-white/5 rounded-xl border border-white/10 flex items-center justify-center shrink-0 overflow-hidden shadow-inner group-hover:scale-105 transition-transform">
                       {app.iconUrl ? (
-                        <img src={app.iconUrl} alt={app.name} className="w-full h-full object-contain p-2" />
+                        <img src={app.iconUrl} alt={app.name} className={`w-full h-full object-contain p-2 ${app.iconUrl.toLowerCase().endsWith('.png') ? '' : 'rounded-lg'}`} />
                       ) : (
                         <span className="text-xl font-bold uppercase text-white/40">{app.name.substring(0, 2)}</span>
                       )}
@@ -315,8 +319,4 @@ export default function UnifiedManagePage() {
       )}
     </main>
   );
-
-  function handleColorChange(id: number, newColor: string) {
-      updateCategoryColorMutation.mutate({ id, color: newColor });
-  }
 }

@@ -182,7 +182,11 @@ export function AddAppModal() {
                 {isScraping ? (
                   <div className="w-6 h-6 border-2 border-white/20 border-t-white/80 rounded-full animate-spin" />
                 ) : previewUrl ? (
-                  <img src={previewUrl} alt="Preview" className="w-full h-full object-contain p-2" />
+                  <img 
+                    src={previewUrl} 
+                    alt="Preview" 
+                    className={`w-full h-full object-contain p-2 ${previewUrl.toLowerCase().endsWith('.png') ? '' : 'rounded-lg'}`} 
+                  />
                 ) : (
                   <span className="text-xs text-white/40 text-center px-1">No Icon</span>
                 )}

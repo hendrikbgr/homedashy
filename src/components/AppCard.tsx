@@ -24,6 +24,8 @@ export function AppCard({ app }: AppCardProps) {
   const serviceStatus = statusRes.find(s => s.id === app.id);
   const isDown = app.isActive && serviceStatus && !serviceStatus.online;
 
+  const isPng = app.iconUrl?.toLowerCase().endsWith('.png');
+
   return (
     <div className="relative w-full h-full group">
       {/* Dynamic Glow Layer */}
@@ -55,15 +57,15 @@ export function AppCard({ app }: AppCardProps) {
           }}
         >
           {/* Icon */}
-          <div className={`w-16 h-16 mb-4 relative flex items-center justify-center bg-white/5 rounded-2xl border border-white/10 group-hover:scale-110 transition-transform duration-300 overflow-hidden ${isDown ? 'border-red-500/30' : ''}`}>
+          <div className={`w-14 h-14 mb-4 relative flex items-center justify-center bg-white/5 rounded-2xl border border-white/10 group-hover:scale-110 transition-transform duration-300 overflow-hidden ${isDown ? 'border-red-500/30' : ''}`}>
             {app.iconUrl ? (
               <img
                 src={app.iconUrl}
                 alt={app.name}
-                className={`object-contain p-2 w-full h-full ${isDown ? 'grayscale opacity-50' : ''}`}
+                className={`object-contain p-2 w-full h-full ${isDown ? 'grayscale opacity-50' : ''} ${!isPng ? 'rounded-lg' : ''}`}
               />
             ) : (
-              <span className={`text-2xl font-bold uppercase ${isDown ? 'text-red-500/70' : 'text-white/70'}`}>
+              <span className={`text-2xl font-bold uppercase text-white/70`}>
                 {app.name.substring(0, 2)}
               </span>
             )}
