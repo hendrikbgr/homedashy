@@ -5,7 +5,7 @@ import { eq } from 'drizzle-orm';
 
 interface HeimdallApp {
   title: string;
-  colour: string; // Hex color e.g., "#fafbfc"
+  colour: string;
   url: string;
   description: string | null;
   appid?: string;
@@ -24,82 +24,88 @@ interface HomedashyApp {
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    
+
     if (!Array.isArray(body)) {
       return NextResponse.json({ error: 'Expected a JSON array of applications' }, { status: 400 });
     }
 
-    let importCount = 0;
+    // Pre-process all items BEFORE the transaction (can use async here)
+    const itemsToInsert: Array<{
+      name: string;
+      url: string;
+      description: string;
+      categoryName: string;
+      iconUrl: string;
+      isActive: boolean;
+    }> = [];
 
-    // Use Drizzle transaction to safely process bulk inserts
-    await db.transaction(async (tx) => {
-      for (const item of body) {
-        // Detect format: Homedashy or Heimdall
-        const isHomedashy = 'name' in item && 'url' in item;
-        const isHeimdall = 'title' in item && 'url' in item;
+    for (const item of body) {
+      const isHomedashy = 'name' in item && 'url' in item;
+      const isHeimdall = 'title' in item && 'url' in item;
 
-        if (!isHomedashy && !isHeimdall) continue;
+      if (!isHomedashy && !isHeimdall) continue;
 
-        let name = '';
-        let url = '';
-        let description = '';
-        let categoryName = 'Uncategorized';
-        let iconUrl = '';
-        let isActive = true;
-
-        if (isHomedashy) {
-          const hApp = item as HomedashyApp;
-          name = hApp.name;
-          url = hApp.url;
-          description = hApp.description || '';
-          categoryName = hApp.category || 'Uncategorized';
-          iconUrl = hApp.iconUrl || '';
-          isActive = hApp.isActive !== undefined ? hApp.isActive : true;
-        } else {
-          const hApp = item as HeimdallApp;
-          name = hApp.title;
-          url = hApp.url;
-          description = hApp.appdescription || hApp.description || 'Imported from Heimdall';
-          
-          // Heimdall has colours. Let's create a Category for it if it looks like a hex/valid color string
-          if (hApp.colour && hApp.colour !== '' && hApp.colour !== '#fafbfc' && hApp.colour !== '#161b1f') {
-              categoryName = `Imported Theme (${hApp.colour})`;
-              
-              // Upsert category (check if exists, create if not)
-              const existingCat = await tx.select().from(categories).where(eq(categories.name, categoryName)).get();
-              if (!existingCat) {
-                 await tx.insert(categories).values({
-                   name: categoryName,
-                   color: hApp.colour.startsWith('#') ? hApp.colour : `#${hApp.colour}`
-                 }).run();
-              }
-          } else {
-              categoryName = 'Heimdall Imports';
-          }
+      if (isHomedashy) {
+        const h = item as HomedashyApp;
+        if (!h.name || !h.url) continue;
+        itemsToInsert.push({
+          name: h.name,
+          url: h.url,
+          description: h.description || '',
+          categoryName: h.category || 'Uncategorized',
+          iconUrl: h.iconUrl || '',
+          isActive: h.isActive !== undefined ? h.isActive : true,
+        });
+      } else {
+        const h = item as HeimdallApp;
+        if (!h.title || !h.url) continue;
+        let categoryName = 'Heimdall Imports';
+        if (h.colour && h.colour !== '' && h.colour !== '#fafbfc' && h.colour !== '#161b1f') {
+          categoryName = `Imported Theme (${h.colour})`;
         }
+        itemsToInsert.push({
+          name: h.title,
+          url: h.url,
+          description: h.appdescription || h.description || '',
+          categoryName,
+          iconUrl: '',
+          isActive: true,
+        });
+      }
+    }
 
-        // Ensure category exists
-        const existingCat = await tx.select().from(categories).where(eq(categories.name, categoryName)).get();
+    if (itemsToInsert.length === 0) {
+      return NextResponse.json({ success: true, count: 0 });
+    }
+
+    // Use synchronous transaction (better-sqlite3 requirement)
+    const importFn = db.transaction((items: typeof itemsToInsert) => {
+      let count = 0;
+      for (const item of items) {
+        // Ensure category exists (synchronous)
+        const existingCat = db.select().from(categories).where(eq(categories.name, item.categoryName)).get();
         if (!existingCat) {
-           await tx.insert(categories).values({
-             name: categoryName,
-             color: '#8b5cf6' // Default purple for new categories
-           }).run();
+          db.insert(categories).values({
+            name: item.categoryName,
+            color: '#8b5cf6',
+          }).run();
         }
 
-        // Insert the application
-        await tx.insert(apps).values({
-          name,
-          url,
-          description,
-          category: categoryName,
-          iconUrl,
-          isActive: isActive
+        db.insert(apps).values({
+          name: item.name,
+          url: item.url,
+          description: item.description,
+          category: item.categoryName,
+          iconUrl: item.iconUrl,
+          isActive: item.isActive,
         }).run();
 
-        importCount++;
+        count++;
       }
+      return count;
     });
+
+    const importCount = importFn(itemsToInsert);
 
     return NextResponse.json({ success: true, count: importCount }, { status: 201 });
   } catch (error: any) {
