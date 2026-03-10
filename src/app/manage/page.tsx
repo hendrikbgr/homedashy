@@ -3,7 +3,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { type App, type Category } from '@/types/app';
 import { EditAppModal } from '@/components/EditAppModal';
-import { HeimdallImporter } from '@/components/HeimdallImporter';
+import { JsonImporter } from '@/components/JsonImporter';
 import { ArrowLeft, Pencil, Trash2, Download, LayoutGrid, Tags, Palette, Globe, ExternalLink } from 'lucide-react';
 import { useState, useRef } from 'react';
 import Link from 'next/link';
@@ -156,7 +156,7 @@ export default function UnifiedManagePage() {
 
           <div className="pt-6 border-t border-white/5 flex flex-wrap items-center justify-between gap-4">
             <div className="flex items-center gap-4">
-               <HeimdallImporter />
+               <JsonImporter />
                <Button variant="outline" className="bg-white/5 border-white/10 hover:bg-white/10 text-white rounded-xl h-11" onClick={handleExport}>
                 <Download className="w-4 h-4 mr-2" />
                 Export Config
