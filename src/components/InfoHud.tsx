@@ -8,11 +8,25 @@ import { Server, Activity, CalendarDays, ChevronRight } from 'lucide-react';
 import Link from 'next/link';
 
 export function InfoHud() {
+  const [mounted, setMounted] = useState(false);
   const [time, setTime] = useState(new Date());
+
+  // Set mounted to true on client-side to prevent hydration mismatch
+  useEffect(() => {
+    setMounted(true);
+    const timer = setInterval(() => setTime(new Date()), 1000);
+    return () => clearInterval(timer);
+  }, []);
 
   // Fetch apps for stats overview
   const { data: apps = [] } = useQuery<App[]>({
     queryKey: ['apps'],
+    // We don't need a queryFn here if it's already defined elsewhere as a default 
+    // but better safe to provide it or ensure it defaults.
+    queryFn: async () => {
+      const res = await fetch('/api/apps');
+      return res.json();
+    }
   });
 
   const { data: statusRes = [], isLoading: isStatusLoading } = useQuery<any[]>({
@@ -22,22 +36,16 @@ export function InfoHud() {
       if (!res.ok) throw new Error('Status check failed');
       return res.json();
     },
-    refetchInterval: 60000, // Refresh status every minute
+    refetchInterval: 60000,
   });
 
   const downServices = statusRes.filter(s => !s.online);
   const totalDownCount = downServices.length;
   const isAllUp = statusRes.length > 0 && totalDownCount === 0;
 
-  useEffect(() => {
-    const timer = setInterval(() => setTime(new Date()), 1000);
-    return () => clearInterval(timer);
-  }, []);
+  const timeString = mounted ? time.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }) : '--:--:--';
+  const dateString = mounted ? time.toLocaleDateString([], { weekday: 'long', month: 'long', day: 'numeric' }) : 'Loading date...';
 
-  const timeString = time.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-  const dateString = time.toLocaleDateString([], { weekday: 'long', month: 'long', day: 'numeric' });
-
-  // Determine greeting based on time of day
   const hour = time.getHours();
   let greeting = 'Good evening';
   if (hour < 12) greeting = 'Good morning';
@@ -49,7 +57,7 @@ export function InfoHud() {
       <Card className="glass-panel col-span-1 md:col-span-2 flex items-center justify-between p-6 relative overflow-hidden">
         <div className="z-10 bg-gradient-to-r from-primary/20 via-transparent to-transparent absolute inset-0 pointer-events-none" />
         <div className="z-20 relative">
-          <h2 className="text-2xl font-bold text-white drop-shadow-md mb-1">{greeting}, Homelabber</h2>
+          <h2 className="text-2xl font-bold text-white drop-shadow-md mb-1">{mounted ? `${greeting}, Homelabber` : 'Welcome'}</h2>
           <div className="flex items-center text-white/70 text-sm">
             <CalendarDays className="w-4 h-4 mr-2" />
             {dateString}

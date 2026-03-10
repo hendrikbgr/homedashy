@@ -40,4 +40,20 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
+# Database
+*.db
+*.db-journal
+*.db-shm
+*.db-wal
 sqlite.db
+
+# Data & Persistence (Docker volumes)
+/data/
+
+# User Uploads
+/public/icons/*
+!/public/icons/.gitkeep
+
+# Local Exports/Imports
+homedashy-export.json
+HeimdallExport.json
